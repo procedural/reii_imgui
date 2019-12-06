@@ -17,6 +17,10 @@ const float mesh_vertices[] = {
   #include "mesh_vertices.h"
 };
 
+const unsigned mesh_indices[] = {
+  #include "mesh_indices.h"
+};
+
 #define _countof(x) (sizeof(x) / sizeof((x)[0]))
 
 int main() {
@@ -107,12 +111,13 @@ int main() {
   reiiCommandListSet(ctx, list);
     reiiCommandSetViewport(ctx, 0, 0, 700, 700);
     reiiCommandSetScissor(ctx, 0, 0, 700, 700);
-    reiiCommandClear(ctx, REII_CLEAR_DEPTH_BIT | REII_CLEAR_COLOR_BIT, 0.f, 0, 0.f, 0.f, 0.05f, 1.f);
+    reiiCommandClear(ctx, REII_CLEAR_DEPTH_BIT | REII_CLEAR_COLOR_BIT, 0.f, 0, 0.f, 0.f, 0.08f, 1.f);
     reiiCommandMeshSetState(ctx, &mesh_state, 0);
     reiiCommandMeshSet(ctx);
-    for (int i = 0, mesh_vertices_count = _countof(mesh_vertices) / 3; i < mesh_vertices_count; i += 1) {
-      reiiCommandMeshColor(ctx, i * 0.00025f, 0, 0.1f, 1);
-      reiiCommandMeshPosition(ctx, mesh_vertices[i * 3 + 0], mesh_vertices[i * 3 + 1], mesh_vertices[i * 3 + 2], 1);
+    for (int i = 0, mesh_indices_count = _countof(mesh_indices); i < mesh_indices_count; i += 1) {
+      unsigned index = mesh_indices[i];
+      reiiCommandMeshColor(ctx, (mesh_vertices[index * 4 + 2] + 1.f) / 1.5f, 0, 0.1f, 1);
+      reiiCommandMeshPosition(ctx, mesh_vertices[index * 4 + 0], mesh_vertices[index * 4 + 1], mesh_vertices[index * 4 + 2], 1);
     }
     reiiCommandMeshEnd(ctx);
   reiiCommandListEnd(ctx);
