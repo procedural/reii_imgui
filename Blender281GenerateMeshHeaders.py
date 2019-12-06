@@ -26,21 +26,17 @@ if len(selected_objects) > 0:
     verts_header_file         = open(os.path.join(EXPORT_DIRECTORY, "mesh_vertices.h"), "w")
     uvs_header_file           = open(os.path.join(EXPORT_DIRECTORY, "mesh_uvs.h"), "w")
     normals_header_file       = open(os.path.join(EXPORT_DIRECTORY, "mesh_normals.h"), "w")
-    texture_names_header_file = open(os.path.join(EXPORT_DIRECTORY, "mesh_texture_names.h"), "w")
-    texture_ids_header_file   = open(os.path.join(EXPORT_DIRECTORY, "mesh_texture_indices.h"), "w")
     submesh_vert_begin_file   = open(os.path.join(EXPORT_DIRECTORY, "submesh_vertex_begin.h"), "w")
     submesh_vert_end_file     = open(os.path.join(EXPORT_DIRECTORY, "submesh_vertex_end.h"), "w")
 
     vert_counter         = 0
     submesh_vert_counter = 0
 
-    texture_names = []
-
     for obj in selected_objects:
         if obj.type == "MESH":
             bm = bmesh.new()
             bm.from_mesh(obj.data)
-            bmesh.ops.triangulate(bm, faces=bm.faces, quad_method=0, ngon_method=0)
+            bmesh.ops.triangulate(bm, faces=bm.faces, quad_method='BEAUTY', ngon_method='BEAUTY')
             split_edges = []
             for e in bm.edges:
                 if e.seam:
@@ -81,34 +77,11 @@ if len(selected_objects) > 0:
             for v in bm.verts:
                 uv = UVFromVertex(active_uv_layer, v)
                 uvs_header_file.write('%f, %f,\n' % (uv.x, uv.y))
-            
-            texture = obj.data.uv_textures.active.data[0].image
-            if texture:
-                texture_names.append(texture.name)
-            else:
-                texture_names.append('')
-
-    unique_texture_names = list(set(texture_names))
-    unique_texture_names.remove('')
-
-    texture_names_header_file.write('0,\n')
-    for texture_name in unique_texture_names:
-        texture_names_header_file.write('"%s",\n' % (texture_name))
-
-    for texture in texture_names:
-        if texture == '':
-            texture_ids_header_file.write('0,\n')
-        else:
-            for i, unique_texture_name in enumerate(unique_texture_names):
-                if texture == unique_texture_name:
-                    texture_ids_header_file.write('%d,\n' % (i + 1))
 
     enums_header_file.close()
     indices_header_file.close()
     verts_header_file.close()
     uvs_header_file.close()
     normals_header_file.close()
-    texture_names_header_file.close()
-    texture_ids_header_file.close()
     submesh_vert_begin_file.close()
     submesh_vert_end_file.close()
