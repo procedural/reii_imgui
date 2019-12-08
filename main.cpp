@@ -112,13 +112,11 @@ int main() {
   ImguiIO    * io    = (ImguiIO *)igGetIO();
   ImguiStyle * style = (ImguiStyle *)igGetStyle();
 
-// TODO:
-//
-//  style->scrollbarRounding = 0;
-//  style->windowRounding    = 0;
-//  style->frameRounding     = 0;
+  style->scrollbarRounding = 0;
+  style->windowRounding    = 0;
+  style->frameRounding     = 0;
 
-//  ImFontAtlas_AddFontFromFileTTF(io->fonts, "NotoSans.ttf", 24, NULL, NULL);
+  ImFontAtlas_AddFontFromFileTTF(io->fonts, "NotoSans.ttf", 21, NULL, NULL);
 
   ReiiHandleCommandList clear_list = 0;
   reiiCreateCommandList(ctx, &clear_list);
@@ -131,9 +129,6 @@ int main() {
   ReiiHandleCommandList list = 0;
   reiiCreateCommandList(ctx, &list);
   reiiCommandListSet(ctx, list);
-    reiiCommandSetViewport(ctx, 0, 0, 700, 700);
-    reiiCommandSetScissor(ctx, 0, 0, 700, 700);
-    reiiCommandClear(ctx, REII_CLEAR_DEPTH_BIT | REII_CLEAR_COLOR_BIT, 0.f, 0, 0.f, 0.f, 0.08f, 1.f);
     reiiCommandMeshSetState(ctx, &mesh_state, 0);
     reiiCommandMeshSet(ctx);
     for (int i = 0, mesh_indices_count = _countof(mesh_indices); i < mesh_indices_count; i += 1) {
