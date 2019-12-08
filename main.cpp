@@ -6,6 +6,7 @@ exit
 #endif
 
 #include "reii.h"
+#include "imgui.h"
 
 #define GLFW_INCLUDE_NONE
 #include "glfw3.h"
@@ -106,6 +107,27 @@ int main() {
   mesh_state.outputColorBlendAlphaFactorTarget              = REII_BLEND_FACTOR_ZERO;
   mesh_state.outputColorBlendAlphaOp                        = REII_BLEND_OP_ADD;
 
+  imguiInit(window, ctx);
+
+  ImguiIO    * io    = (ImguiIO *)igGetIO();
+  ImguiStyle * style = (ImguiStyle *)igGetStyle();
+
+// TODO:
+//
+//  style->scrollbarRounding = 0;
+//  style->windowRounding    = 0;
+//  style->frameRounding     = 0;
+
+//  ImFontAtlas_AddFontFromFileTTF(io->fonts, "NotoSans.ttf", 24, NULL, NULL);
+
+  ReiiHandleCommandList clear_list = 0;
+  reiiCreateCommandList(ctx, &clear_list);
+  reiiCommandListSet(ctx, clear_list);
+    reiiCommandSetViewport(ctx, 0, 0, 700, 700);
+    reiiCommandSetScissor(ctx, 0, 0, 700, 700);
+    reiiCommandClear(ctx, REII_CLEAR_DEPTH_BIT | REII_CLEAR_COLOR_BIT, 0.f, 0, 0.f, 0.f, 0.08f, 1.f);
+  reiiCommandListEnd(ctx);
+
   ReiiHandleCommandList list = 0;
   reiiCreateCommandList(ctx, &list);
   reiiCommandListSet(ctx, list);
@@ -122,7 +144,7 @@ int main() {
     reiiCommandMeshEnd(ctx);
   reiiCommandListEnd(ctx);
 
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   float pos_x = 0;
   float pos_y = 0;
@@ -140,6 +162,8 @@ int main() {
 
   for (; glfwWindowShouldClose(window) == 0;) {
     glfwPollEvents();
+
+    imguiNewFrame();
 
     double mouse_x = 0;
     double mouse_y = 0;
@@ -193,9 +217,44 @@ int main() {
     pos_y += move_vec_y * 0.025;
     pos_z += move_vec_z * 0.025;
 
-    reiiSetProgramEnvironmentValueVertex(ctx, 0, pos_x, pos_y, pos_z, 0);
-    reiiSetProgramEnvironmentValueVertex(ctx, 1, cosf(-rot_x), sinf(-rot_x), cosf(-rot_y), sinf(-rot_y));
-    reiiSubmitCommandLists(ctx, 1, &list);
+    static bool showTestWindow = 1;
+    igShowTestWindow(&showTestWindow);
+    {
+      // Flat UI by yorick.penninks: https://color.adobe.com/Flat-UI-color-theme-2469224/
+      static ImVec3 color_for_text = {236 / 255.f, 240 / 255.f, 241 / 255.f};
+      static ImVec3 color_for_head = { 41 / 255.f, 128 / 255.f, 185 / 255.f};
+      static ImVec3 color_for_area = { 57 / 255.f,  79 / 255.f, 105 / 255.f};
+      static ImVec3 color_for_body = { 44 / 255.f,  62 / 255.f,  80 / 255.f};
+      static ImVec3 color_for_pops = { 33 / 255.f,  46 / 255.f,  60 / 255.f};
+
+      // Mint Y Dark:
+      //static struct ImVec3 color_for_text = {211 / 255.f, 211 / 255.f, 211 / 255.f};
+      //static struct ImVec3 color_for_head = { 95 / 255.f, 142 / 255.f,  85 / 255.f};
+      //static struct ImVec3 color_for_area = { 47 / 255.f,  47 / 255.f,  47 / 255.f};
+      //static struct ImVec3 color_for_body = { 64 / 255.f,  64 / 255.f,  64 / 255.f};
+      //static struct ImVec3 color_for_pops = { 30 / 255.f,  30 / 255.f,  30 / 255.f};
+
+      // Arc Theme:
+      //static struct ImVec3 color_for_text = {211 / 255.f, 218 / 255.f, 227 / 255.f};
+      //static struct ImVec3 color_for_head = { 64 / 255.f, 132 / 255.f, 214 / 255.f};
+      //static struct ImVec3 color_for_area = { 47 / 255.f,  52 / 255.f,  63 / 255.f};
+      //static struct ImVec3 color_for_body = { 56 / 255.f,  60 / 255.f,  74 / 255.f};
+      //static struct ImVec3 color_for_pops = { 28 / 255.f,  30 / 255.f,  37 / 255.f};
+
+      igColorEdit3("Text", &color_for_text.x);
+      igColorEdit3("Head", &color_for_head.x);
+      igColorEdit3("Area", &color_for_area.x);
+      igColorEdit3("Body", &color_for_body.x);
+      igColorEdit3("Pops", &color_for_pops.x);
+
+      imguiEasyTheming(color_for_text, color_for_head, color_for_area, color_for_body, color_for_pops);
+    }
+
+    reiiSubmitCommandLists(ctx, 1, &clear_list);
+//    reiiSetProgramEnvironmentValueVertex(ctx, 0, pos_x, pos_y, pos_z, 0);
+//    reiiSetProgramEnvironmentValueVertex(ctx, 1, cosf(-rot_x), sinf(-rot_x), cosf(-rot_y), sinf(-rot_y));
+//    reiiSubmitCommandLists(ctx, 1, &list);
+    igRender();
 
     glfwSwapBuffers(window);
 
@@ -203,6 +262,7 @@ int main() {
     mouse_y_prev = mouse_y;
   }
 
+  imguiDeinit();
   glfwDestroyWindow(window);
   glfwTerminate();
 }
