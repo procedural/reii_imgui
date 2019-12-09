@@ -29,7 +29,7 @@ int main() {
   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 1);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
-  glfwWindowHint(GLFW_RESIZABLE, 0);
+  glfwWindowHint(GLFW_RESIZABLE, 1);
   glfwWindowHint(GLFW_SAMPLES, 4);
   GLFWwindow * window = glfwCreateWindow(700, 700, "", NULL, NULL);
   glfwMakeContextCurrent(window);
@@ -120,11 +120,6 @@ int main() {
 
   ReiiHandleCommandList clear_list = 0;
   reiiCreateCommandList(ctx, &clear_list);
-  reiiCommandListSet(ctx, clear_list);
-    reiiCommandSetViewport(ctx, 0, 0, 700, 700);
-    reiiCommandSetScissor(ctx, 0, 0, 700, 700);
-    reiiCommandClear(ctx, REII_CLEAR_DEPTH_BIT | REII_CLEAR_COLOR_BIT, 0.f, 0, 0.f, 0.f, 0.08f, 1.f);
-  reiiCommandListEnd(ctx);
 
   ReiiHandleCommandList list = 0;
   reiiCreateCommandList(ctx, &list);
@@ -245,10 +240,20 @@ int main() {
       imguiEasyTheming(color_for_text, color_for_head, color_for_area, color_for_body, color_for_pops);
     }
 
+    int windowWidth  = 0;
+    int windowHeight = 0;
+    glfwGetWindowSize(window, &windowWidth, &windowHeight);
+    reiiCommandListSet(ctx, clear_list);
+      reiiCommandSetViewport(ctx, 0, 0, windowWidth, windowHeight);
+      reiiCommandSetScissor(ctx, 0, 0, windowWidth, windowHeight);
+      reiiCommandClear(ctx, REII_CLEAR_DEPTH_BIT | REII_CLEAR_COLOR_BIT, 0.f, 0, 0.f, 0.f, 0.08f, 1.f);
+    reiiCommandListEnd(ctx);
     reiiSubmitCommandLists(ctx, 1, &clear_list);
+
 //    reiiSetProgramEnvironmentValueVertex(ctx, 0, pos_x, pos_y, pos_z, 0);
 //    reiiSetProgramEnvironmentValueVertex(ctx, 1, cosf(-rot_x), sinf(-rot_x), cosf(-rot_y), sinf(-rot_y));
 //    reiiSubmitCommandLists(ctx, 1, &list);
+
     igRender();
 
     glfwSwapBuffers(window);
