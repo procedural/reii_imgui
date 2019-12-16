@@ -63,8 +63,8 @@ int main() {
   mesh_state.codeVertex                                     = vp_string;
   mesh_state.codeFragment                                   = fp_string;
   mesh_state.rasterizationDepthClampEnable                  = 0;
-  mesh_state.rasterizationCullMode                          = REII_CULL_MODE_NONE;
-  mesh_state.rasterizationFrontFace                         = REII_FRONT_FACE_COUNTER_CLOCKWISE;
+  mesh_state.rasterizationCullMode                          = REII_CULL_MODE_BACK;
+  mesh_state.rasterizationFrontFace                         = REII_FRONT_FACE_CLOCKWISE;
   mesh_state.rasterizationDepthBiasEnable                   = 0;
   mesh_state.rasterizationDepthBiasConstantFactor           = 0;
   mesh_state.rasterizationDepthBiasSlopeFactor              = 0;
