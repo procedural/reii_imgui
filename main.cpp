@@ -205,12 +205,6 @@ int main() {
       move_vec_z = pos_z * rot_cos + pos_x * rot_sin;
     }
 
-    pos_x += move_vec_x * 0.025;
-#if 0
-    pos_y += move_vec_y * 0.025;
-#endif
-    pos_z += move_vec_z * 0.025;
-
 #if 0
     static bool showTestWindow = 1;
     igShowTestWindow(&showTestWindow);
@@ -256,10 +250,50 @@ int main() {
     reiiCommandListEnd(ctx);
     reiiSubmitCommandLists(ctx, 1, &clear_list);
 
+    float future_pos_x = pos_x;
+    float future_pos_z = pos_z;
+
+    future_pos_x += move_vec_x * 0.025;
+    future_pos_z += move_vec_z * 0.025;
+
+    float quanta = (float)(100);
+
+    int64_t quantized_future_pos_x = (int64_t)(future_pos_x * quanta);
+    int64_t quantized_future_pos_z = (int64_t)(future_pos_z * quanta);
+
 #if 1
-    printf("%ld %ld\n", (int64_t)(pos_x * 100), (int64_t)(pos_z * 100));
+    printf("%ld %ld\n", quantized_future_pos_x, quantized_future_pos_z);
     fflush(stdout);
 #endif
+
+    // Test area
+    {
+      if (quantized_future_pos_x > 400) {
+        pos_x = 400 / quanta;
+        move_vec_x = 0.f;
+      }
+
+      if (quantized_future_pos_x < -400) {
+        pos_x = -400 / quanta;
+        move_vec_x = 0.f;
+      }
+
+      if (quantized_future_pos_z > 400) {
+        pos_z = 400 / quanta;
+        move_vec_z = 0.f;
+      }
+
+      if (quantized_future_pos_z < -400) {
+        pos_z = -400 / quanta;
+        move_vec_z = 0.f;
+      }
+    }
+
+    pos_x += move_vec_x * 0.025;
+#if 0
+    pos_y += move_vec_y * 0.025;
+#endif
+    pos_z += move_vec_z * 0.025;
 
     reiiSetProgramEnvironmentValueVertex(ctx, 0, pos_x, pos_y, pos_z, 0);
     reiiSetProgramEnvironmentValueVertex(ctx, 1, cosf(-rot_x), sinf(-rot_x), cosf(-rot_y), sinf(-rot_y));
