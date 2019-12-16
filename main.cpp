@@ -29,7 +29,7 @@ int main() {
   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 1);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
-  glfwWindowHint(GLFW_RESIZABLE, 1);
+  glfwWindowHint(GLFW_RESIZABLE, 0);
   glfwWindowHint(GLFW_SAMPLES, 4);
   GLFWwindow * window = glfwCreateWindow(700, 700, "", NULL, NULL);
   glfwMakeContextCurrent(window);
@@ -134,7 +134,7 @@ int main() {
     reiiCommandMeshEnd(ctx);
   reiiCommandListEnd(ctx);
 
-//  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   float pos_x = 0;
   float pos_y = 0;
@@ -207,6 +207,7 @@ int main() {
     pos_y += move_vec_y * 0.025;
     pos_z += move_vec_z * 0.025;
 
+#if 0
     static bool showTestWindow = 1;
     igShowTestWindow(&showTestWindow);
     {
@@ -239,6 +240,7 @@ int main() {
 
       imguiEasyTheming(color_for_text, color_for_head, color_for_area, color_for_body, color_for_pops);
     }
+#endif
 
     int windowWidth  = 0;
     int windowHeight = 0;
@@ -250,9 +252,9 @@ int main() {
     reiiCommandListEnd(ctx);
     reiiSubmitCommandLists(ctx, 1, &clear_list);
 
-//    reiiSetProgramEnvironmentValueVertex(ctx, 0, pos_x, pos_y, pos_z, 0);
-//    reiiSetProgramEnvironmentValueVertex(ctx, 1, cosf(-rot_x), sinf(-rot_x), cosf(-rot_y), sinf(-rot_y));
-//    reiiSubmitCommandLists(ctx, 1, &list);
+    reiiSetProgramEnvironmentValueVertex(ctx, 0, pos_x, pos_y, pos_z, 0);
+    reiiSetProgramEnvironmentValueVertex(ctx, 1, cosf(-rot_x), sinf(-rot_x), cosf(-rot_y), sinf(-rot_y));
+    reiiSubmitCommandLists(ctx, 1, &list);
 
     igRender();
 
