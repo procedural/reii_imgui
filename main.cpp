@@ -172,8 +172,10 @@ int main() {
     move_vec_x += glfwGetKey(window, GLFW_KEY_D);
     move_vec_x -= glfwGetKey(window, GLFW_KEY_A);
 
+#if 0
     move_vec_y += glfwGetKey(window, GLFW_KEY_E);
     move_vec_y -= glfwGetKey(window, GLFW_KEY_Q);
+#endif
 
     move_vec_z += glfwGetKey(window, GLFW_KEY_W);
     move_vec_z -= glfwGetKey(window, GLFW_KEY_S);
@@ -204,7 +206,9 @@ int main() {
     }
 
     pos_x += move_vec_x * 0.025;
+#if 0
     pos_y += move_vec_y * 0.025;
+#endif
     pos_z += move_vec_z * 0.025;
 
 #if 0
@@ -251,6 +255,11 @@ int main() {
       reiiCommandClear(ctx, REII_CLEAR_DEPTH_BIT | REII_CLEAR_COLOR_BIT, 0.f, 0, 0.f, 0.f, 0.08f, 1.f);
     reiiCommandListEnd(ctx);
     reiiSubmitCommandLists(ctx, 1, &clear_list);
+
+#if 1
+    printf("%ld %ld\n", (int64_t)(pos_x * 100), (int64_t)(pos_z * 100));
+    fflush(stdout);
+#endif
 
     reiiSetProgramEnvironmentValueVertex(ctx, 0, pos_x, pos_y, pos_z, 0);
     reiiSetProgramEnvironmentValueVertex(ctx, 1, cosf(-rot_x), sinf(-rot_x), cosf(-rot_y), sinf(-rot_y));
