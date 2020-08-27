@@ -319,7 +319,9 @@ static inline void imguiCreateFontTexture() {
   int bpp    = 0;
   ImFontAtlas_GetTexDataAsRGBA32(io->fonts, &data, &width, &height, &bpp);
 
-  reiiCreateTexture(globalImguiState->gpuContext, REII_TEXTURE_BINDING_2D, REII_SAMPLER_FILTERING_LINEAR, REII_SAMPLER_FILTERING_LINEAR, REII_SAMPLER_BEHAVIOR_OUTSIDE_TEXTURE_COORDINATE_REPEAT, REII_SAMPLER_BEHAVIOR_OUTSIDE_TEXTURE_COORDINATE_REPEAT, 1, 0, &globalImguiState->gpuFontAtlas);
+  reiiCreateTexture(globalImguiState->gpuContext, &globalImguiState->gpuFontAtlas);
+  reiiTextureSetStateMipmap(globalImguiState->gpuContext, REII_TEXTURE_BINDING_2D, globalImguiState->gpuFontAtlas, 0);
+  reiiTextureSetStateSampler(globalImguiState->gpuContext, REII_TEXTURE_BINDING_2D, globalImguiState->gpuFontAtlas, REII_SAMPLER_FILTERING_LINEAR, REII_SAMPLER_FILTERING_LINEAR, REII_SAMPLER_BEHAVIOR_OUTSIDE_TEXTURE_COORDINATE_REPEAT, REII_SAMPLER_BEHAVIOR_OUTSIDE_TEXTURE_COORDINATE_REPEAT, 1);
   reiiTextureDefineAndCopyFromCpu(globalImguiState->gpuContext, REII_TEXTURE_BINDING_2D, globalImguiState->gpuFontAtlas, 0, REII_TEXTURE_TEXEL_FORMAT_RGBA, width, height, REII_TEXTURE_TEXEL_FORMAT_RGBA, REII_TEXTURE_TEXEL_TYPE_U8, 4, data);
 
   ImFontAtlas_SetTexID(io->fonts, (void *)(intptr_t)globalImguiState->gpuFontAtlas);

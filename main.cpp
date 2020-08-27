@@ -1,7 +1,7 @@
 #if 0
 rm -f a.out
-clang main.c reii.c libglfw.so.3 -lGL -lm
-LD_LIBRARY_PATH=. ./a.out
+clang main.c reii.c -lm -lGL libglfw.so.3 libimgui.so
+patchelf --set-rpath . a.out
 exit
 #endif
 
@@ -31,7 +31,7 @@ int main() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
   glfwWindowHint(GLFW_RESIZABLE, 0);
   glfwWindowHint(GLFW_SAMPLES, 4);
-  GLFWwindow * window = glfwCreateWindow(700, 700, "", NULL, NULL);
+  GLFWwindow * window = glfwCreateWindow(1000, 1000, "", NULL, NULL);
   glfwMakeContextCurrent(window);
 
   ReiiContext   context = {};
@@ -134,7 +134,7 @@ int main() {
     reiiCommandMeshEnd(ctx);
   reiiCommandListEnd(ctx);
 
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   float pos_x = 0;
   float pos_y = 0;

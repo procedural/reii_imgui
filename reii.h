@@ -213,7 +213,9 @@ void reiiCreateContext                      (ReiiTypeProcedureGetProcAddress get
 
 // Texture
 
-void reiiCreateTexture                      (ReiiContext * context, ReiiTextureBinding binding, ReiiSamplerFiltering magFiltering, ReiiSamplerFiltering minFiltering, ReiiSamplerBehaviorOutsideTextureCoordinate behaviorOutsideTextureCoordinateU, ReiiSamplerBehaviorOutsideTextureCoordinate behaviorOutsideTextureCoordinateV, int maxAnisotropy, ReiiBool32 generateMipLevels, ReiiHandleTexture * outTexture);
+void reiiCreateTexture                      (ReiiContext * context, ReiiHandleTexture * outTexture);
+void reiiTextureSetStateMipmap              (ReiiContext * context, ReiiTextureBinding binding, ReiiHandleTexture bindingTexture, ReiiBool32 generateMipLevels);
+void reiiTextureSetStateSampler             (ReiiContext * context, ReiiTextureBinding binding, ReiiHandleTexture bindingTexture, ReiiSamplerFiltering magFiltering, ReiiSamplerFiltering minFiltering, ReiiSamplerBehaviorOutsideTextureCoordinate behaviorOutsideTextureCoordinateU, ReiiSamplerBehaviorOutsideTextureCoordinate behaviorOutsideTextureCoordinateV, int maxAnisotropy);
 void reiiTextureDefineAndCopyFromCpu        (ReiiContext * context, ReiiTextureBinding binding, ReiiHandleTexture bindingTexture, int bindingLevel, ReiiTextureTexelFormat bindingTexelFormat, int width, int height, ReiiTextureTexelFormat texelsFormat, ReiiTextureTexelType texelsType, int texelsBytesAlignment, void * texels);
 void reiiTextureDefineAndCopyFromBackbuffer (ReiiContext * context, ReiiTextureBinding binding, ReiiHandleTexture bindingTexture, int bindingLevel, ReiiTextureTexelFormat bindingTexelFormat, int backbufferX, int backbufferY, int width, int height);
 void reiiTextureCopyFromCpu                 (ReiiContext * context, ReiiTextureBinding binding, ReiiHandleTexture bindingTexture, int bindingLevel, int bindingX, int bindingY, int width, int height, ReiiTextureTexelFormat texelsFormat, ReiiTextureTexelType texelsType, int texelsBytesAlignment, void * texels);
@@ -227,7 +229,7 @@ void reiiCommandListSet                     (ReiiContext * context, ReiiHandleCo
 void reiiCommandListEnd                     (ReiiContext * context);
 void reiiCommandSetViewport                 (ReiiContext * context, int x, int y, int width, int height);
 void reiiCommandSetScissor                  (ReiiContext * context, int x, int y, int width, int height);
-void reiiCommandClear                       (ReiiContext * context, ReiiClearFlags clear, float depthValue, int stencilValue, float colorR, float colorG, float colorB, float colorA);
+void reiiCommandClear                       (ReiiContext * context, ReiiClearFlags clear, float depthValue, unsigned stencilValue, float colorR, float colorG, float colorB, float colorA);
 void reiiCommandMeshSetState                (ReiiContext * context, ReiiMeshState * state, ReiiMeshTextureBindings * bindings);
 void reiiCommandMeshSet                     (ReiiContext * context);
 void reiiCommandMeshEnd                     (ReiiContext * context);
@@ -257,6 +259,7 @@ void reiiGetStatus                          (ReiiContext * context, ReiiStatus *
 
 void reiiFlush                              (ReiiContext * context);
 void reiiFinish                             (ReiiContext * context);
+void reiiCheckCode                          (ReiiContext * context, const char * codeVertex, const char * codeFragment);
 
 #ifdef __cplusplus
 }

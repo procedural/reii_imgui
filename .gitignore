@@ -1,6 +1,7 @@
 a.out
 build
-CMakeLists.txt.user
+imgui.ini
+*.txt.user
 *.sdf
 *.sln
 *.suo

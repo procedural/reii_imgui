@@ -1,5 +1,8 @@
 // REI
 
+#include <string.h> // For strlen
+#include <stdio.h>  // For printf
+
 #ifdef __linux__
 #define __inline inline
 #endif
@@ -282,7 +285,7 @@ typedef struct ReiTypeContext {
   void (*glGenProgramsARB)(int programsCount, ReiHandleProgram * outPrograms);
   void (*glDeleteProgramsARB)(int programsCount, ReiHandleProgram * programs);
   void (*glBindProgramARB)(ReiProgramBinding binding, ReiHandleProgram program);
-  void (*glProgramStringARB)(ReiProgramBinding binding, unsigned stringType, unsigned stringLengthWithoutNullTerminator, char * string);
+  void (*glProgramStringARB)(ReiProgramBinding binding, unsigned stringType, unsigned stringLengthWithoutNullTerminator, const char * string);
   void (*glGenTextures)(int texturesCount, ReiHandleTexture * outTextures);
   void (*glDeleteTextures)(int texturesCount, ReiHandleTexture * textures);
   void (*glActiveTexture)(unsigned slot);
@@ -329,7 +332,7 @@ typedef struct ReiTypeContext {
   void (*glProgramLocalParameter4fARB)(ReiProgramBinding binding, unsigned index, float x, float y, float z, float w);
   void (*glCallList)(ReiHandleCommandList list);
   ReiStatus (*glGetError)();
-  char * (*glGetString)(unsigned parameter);
+  const char * (*glGetString)(unsigned parameter);
   void (*glGetIntegerv)(unsigned parameter, int * outValue);
   void (*glFlush)();
   void (*glFinish)();
@@ -415,7 +418,7 @@ static __inline void reiBindProgram(ReiContext * context, ReiProgramBinding bind
 
 // Program initialization
 
-static __inline void reiProgramInitialize(ReiContext * context, ReiProgramBinding binding, unsigned codeStringLengthWithoutNullTerminator, char * codeString) {
+static __inline void reiProgramInitialize(ReiContext * context, ReiProgramBinding binding, unsigned codeStringLengthWithoutNullTerminator, const char * codeString) {
   const ReiTypeContext * ctx = (ReiTypeContext *)(void *)context;
   ctx->glProgramStringARB(binding, 0x8875, codeStringLengthWithoutNullTerminator, codeString); // GL_PROGRAM_FORMAT_ASCII
 }
@@ -446,16 +449,20 @@ static __inline void reiBindTextureToActiveTextureSlot(ReiContext * context, Rei
   ctx->glBindTexture(binding, texture);
 }
 
-// Texture initialization
+// Texture state
 
-static __inline void reiTextureInitialize(ReiContext * context, ReiTextureBinding binding, ReiSamplerFiltering magFiltering, ReiSamplerFiltering minFiltering, ReiSamplerBehaviorOutsideTextureCoordinate behaviorOutsideTextureCoordinateU, ReiSamplerBehaviorOutsideTextureCoordinate behaviorOutsideTextureCoordinateV, int maxAnisotropy, ReiBool32 generateMipLevels) {
+static __inline void reiTextureSetStateMipmap(ReiContext * context, ReiTextureBinding binding, ReiBool32 generateMipLevels) {
+  const ReiTypeContext * ctx = (ReiTypeContext *)(void *)context;
+  ctx->glTexParameteri(binding, 0x8191, generateMipLevels); // GL_GENERATE_MIPMAP
+}
+
+static __inline void reiTextureSetStateSampler(ReiContext * context, ReiTextureBinding binding, ReiSamplerFiltering magFiltering, ReiSamplerFiltering minFiltering, ReiSamplerBehaviorOutsideTextureCoordinate behaviorOutsideTextureCoordinateU, ReiSamplerBehaviorOutsideTextureCoordinate behaviorOutsideTextureCoordinateV, int maxAnisotropy) {
   const ReiTypeContext * ctx = (ReiTypeContext *)(void *)context;
   ctx->glTexParameteri(binding, 0x2800, magFiltering); // GL_TEXTURE_MAG_FILTER
   ctx->glTexParameteri(binding, 0x2801, minFiltering); // GL_TEXTURE_MIN_FILTER
   ctx->glTexParameteri(binding, 0x2802, behaviorOutsideTextureCoordinateU); // GL_TEXTURE_WRAP_S
   ctx->glTexParameteri(binding, 0x2803, behaviorOutsideTextureCoordinateV); // GL_TEXTURE_WRAP_T
   ctx->glTexParameteri(binding, 0x84FE, maxAnisotropy); // GL_TEXTURE_MAX_ANISOTROPY
-  ctx->glTexParameteri(binding, 0x8191, generateMipLevels); // GL_GENERATE_MIPMAP
 }
 
 // Texture texels upload and backbuffer readback
@@ -531,8 +538,11 @@ static __inline void reiCommandSetScissor(ReiContext * context, int x, int y, in
 
 static __inline void reiCommandClear(ReiContext * context, ReiClearFlags clear, float depthValue, int stencilValue, float colorR, float colorG, float colorB, float colorA) {
   const ReiTypeContext * ctx = (ReiTypeContext *)(void *)context;
+  ctx->glDepthMask(1);
   ctx->glClearDepthf(depthValue);
+  ctx->glStencilMaskSeparate(0x0408, 0xFF); // GL_FRONT_AND_BACK
   ctx->glClearStencil(stencilValue);
+  ctx->glColorMask(1, 1, 1, 1);
   ctx->glClearColor(colorR, colorG, colorB, colorA);
   ctx->glClear(clear);
 }
@@ -632,7 +642,7 @@ static __inline ReiStatus reiGetStatus(ReiContext * context) {
   return ctx->glGetError();
 }
 
-static __inline char * reiGetProgramStatusString(ReiContext * context) {
+static __inline const char * reiGetProgramStatusString(ReiContext * context) {
   const ReiTypeContext * ctx = (ReiTypeContext *)(void *)context;
   return ctx->glGetString(0x8874); // GL_PROGRAM_ERROR_STRING
 }
@@ -656,10 +666,47 @@ static __inline void reiFinish(ReiContext * context) {
   ctx->glFinish();
 }
 
-// REII
+static __inline void reiCheckCode(ReiContext * context, const char * codeVertex, const char * codeFragment) {
+  const char * error = 0;
+  if (codeVertex != 0) {
+    ReiHandleProgram programVertex = reiCreateProgram(context);
+    reiBindProgram(context, REI_PROGRAM_BINDING_VERTEX, programVertex);
+    reiProgramInitialize(context, REI_PROGRAM_BINDING_VERTEX, strlen(codeVertex), codeVertex);
+    reiBindProgram(context, REI_PROGRAM_BINDING_VERTEX, 0);
+    error = reiGetProgramStatusString(context);
+    if (error != NULL) {
+      if (error[0] != '\0') {
+        printf("%s", "[reiCheckCode] Vertex code error:\n");
+        printf("%s", error);
+        fflush(stdout);
+      }
+    }
+    reiDestroyProgram(context, programVertex);
+  } else {
+    printf("%s", "[reiCheckCode] Warning: codeVertex == NULL\n");
+    fflush(stdout);
+  }
+  if (codeFragment != 0) {
+    ReiHandleProgram programFragment = reiCreateProgram(context);
+    reiBindProgram(context, REI_PROGRAM_BINDING_FRAGMENT, programFragment);
+    reiProgramInitialize(context, REI_PROGRAM_BINDING_FRAGMENT, strlen(codeFragment), codeFragment);
+    reiBindProgram(context, REI_PROGRAM_BINDING_FRAGMENT, 0);
+    error = reiGetProgramStatusString(context);
+    if (error != NULL) {
+      if (error[0] != '\0') {
+        printf("%s", "[reiCheckCode] Fragment code error:\n");
+        printf("%s", error);
+        fflush(stdout);
+      }
+    }
+    reiDestroyProgram(context, programFragment);
+  } else {
+    printf("%s", "[reiCheckCode] Warning: codeFragment == NULL\n");
+    fflush(stdout);
+  }
+}
 
-#include <string.h>
-#include <stdio.h>
+// REII
 
 #define REII_MAX_TEXTURE_BINDINGS_COUNT 8
 
@@ -726,14 +773,24 @@ void reiiCreateContext(ReiTypeProcedureGetProcAddress getProcAddress, ReiContext
 
 // Texture
 
-void reiiCreateTexture(ReiContext * context, ReiTextureBinding binding, ReiSamplerFiltering magFiltering, ReiSamplerFiltering minFiltering, ReiSamplerBehaviorOutsideTextureCoordinate behaviorOutsideTextureCoordinateU, ReiSamplerBehaviorOutsideTextureCoordinate behaviorOutsideTextureCoordinateV, int maxAnisotropy, ReiBool32 generateMipLevels, ReiHandleTexture * outTexture) {
-  ReiHandleTexture texture = reiCreateTexture(context);
+void reiiCreateTexture(ReiContext * context, ReiHandleTexture * outTexture) {
+  outTexture[0] = reiCreateTexture(context);
+}
+
+void reiiTextureSetStateMipmap(ReiContext * context, ReiTextureBinding binding, ReiHandleTexture bindingTexture, ReiBool32 generateMipLevels) {
   ReiTextureBinding metabinding = binding == REI_TEXTURE_BINDING_2D ? REI_TEXTURE_BINDING_2D : REI_TEXTURE_BINDING_CUBE;
   reiSetActiveTextureSlot(context, 0);
-  reiBindTextureToActiveTextureSlot(context, metabinding, texture);
-  reiTextureInitialize(context, binding, magFiltering, minFiltering, behaviorOutsideTextureCoordinateU, behaviorOutsideTextureCoordinateV, maxAnisotropy, generateMipLevels);
+  reiBindTextureToActiveTextureSlot(context, metabinding, bindingTexture);
+  reiTextureSetStateMipmap(context, binding, generateMipLevels);
   reiBindTextureToActiveTextureSlot(context, metabinding, 0);
-  outTexture[0] = texture;
+}
+
+void reiiTextureSetStateSampler(ReiContext * context, ReiTextureBinding binding, ReiHandleTexture bindingTexture, ReiSamplerFiltering magFiltering, ReiSamplerFiltering minFiltering, ReiSamplerBehaviorOutsideTextureCoordinate behaviorOutsideTextureCoordinateU, ReiSamplerBehaviorOutsideTextureCoordinate behaviorOutsideTextureCoordinateV, int maxAnisotropy) {
+  ReiTextureBinding metabinding = binding == REI_TEXTURE_BINDING_2D ? REI_TEXTURE_BINDING_2D : REI_TEXTURE_BINDING_CUBE;
+  reiSetActiveTextureSlot(context, 0);
+  reiBindTextureToActiveTextureSlot(context, metabinding, bindingTexture);
+  reiTextureSetStateSampler(context, binding, magFiltering, minFiltering, behaviorOutsideTextureCoordinateU, behaviorOutsideTextureCoordinateV, maxAnisotropy);
+  reiBindTextureToActiveTextureSlot(context, metabinding, 0);
 }
 
 void reiiTextureDefineAndCopyFromCpu(ReiContext * context, ReiTextureBinding binding, ReiHandleTexture bindingTexture, int bindingLevel, ReiTextureTexelFormat bindingTexelFormat, int width, int height, ReiTextureTexelFormat texelsFormat, ReiTextureTexelType texelsType, int texelsBytesAlignment, void * texels) {
@@ -795,19 +852,26 @@ void reiiCommandSetScissor(ReiContext * context, int x, int y, int width, int he
   reiCommandSetScissor(context, x, y, width, height);
 }
 
-void reiiCommandClear(ReiContext * context, ReiClearFlags clear, float depthValue, int stencilValue, float colorR, float colorG, float colorB, float colorA) {
+void reiiCommandClear(ReiContext * context, ReiClearFlags clear, float depthValue, unsigned stencilValue, float colorR, float colorG, float colorB, float colorA) {
   reiCommandClear(context, clear, depthValue, stencilValue, colorR, colorG, colorB, colorA);
 }
 
 void reiiCommandMeshSetState(ReiContext * context, ReiiMeshState * state, ReiiMeshTextureBindings * bindings) {
+  const char * error = NULL;
   unsigned i = 0;
   if (state->programVertex == 0) {
     ReiHandleProgram program = reiCreateProgram(context);
     reiBindProgram(context, REI_PROGRAM_BINDING_VERTEX, program);
     reiProgramInitialize(context, REI_PROGRAM_BINDING_VERTEX, strlen(state->codeVertex), state->codeVertex);
     reiBindProgram(context, REI_PROGRAM_BINDING_VERTEX, REII_GLOBAL_CURRENT_MESH_STATE == 0 ? 0 : REII_GLOBAL_CURRENT_MESH_STATE->programVertex);
-    printf("%s", reiGetProgramStatusString(context));
-    fflush(stdout);
+    error = reiGetProgramStatusString(context);
+    if (error != NULL) {
+      if (error[0] != '\0') {
+        printf("%s", "[reiiCommandMeshSetState] Vertex code error:\n");
+        printf("%s", error);
+        fflush(stdout);
+      }
+    }
     state->programVertex = program;
   }
   if (state->programFragment == 0) {
@@ -815,8 +879,14 @@ void reiiCommandMeshSetState(ReiContext * context, ReiiMeshState * state, ReiiMe
     reiBindProgram(context, REI_PROGRAM_BINDING_FRAGMENT, program);
     reiProgramInitialize(context, REI_PROGRAM_BINDING_FRAGMENT, strlen(state->codeFragment), state->codeFragment);
     reiBindProgram(context, REI_PROGRAM_BINDING_FRAGMENT, REII_GLOBAL_CURRENT_MESH_STATE == 0 ? 0 : REII_GLOBAL_CURRENT_MESH_STATE->programFragment);
-    printf("%s", reiGetProgramStatusString(context));
-    fflush(stdout);
+    error = reiGetProgramStatusString(context);
+    if (error != NULL) {
+      if (error[0] != '\0') {
+        printf("%s", "[reiiCommandMeshSetState] Fragment code error:\n");
+        printf("%s", error);
+        fflush(stdout);
+      }
+    }
     state->programFragment = program;
   }
   if (state != REII_GLOBAL_CURRENT_MESH_STATE) {
@@ -913,4 +983,8 @@ void reiiFlush(ReiContext * context) {
 
 void reiiFinish(ReiContext * context) {
   reiFinish(context);
+}
+
+void reiiCheckCode(ReiContext * context, const char * codeVertex, const char * codeFragment) {
+  reiCheckCode(context, codeVertex, codeFragment);
 }
