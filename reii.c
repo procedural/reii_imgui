@@ -536,7 +536,7 @@ static __inline void reiCommandSetScissor(ReiContext * context, int x, int y, in
 
 // Command recording of backbuffer(s) clearing
 
-static __inline void reiCommandClear(ReiContext * context, ReiClearFlags clear, float depthValue, int stencilValue, float colorR, float colorG, float colorB, float colorA) {
+static __inline void reiCommandClear(ReiContext * context, ReiClearFlags clear, float depthValue, unsigned stencilValue, float colorR, float colorG, float colorB, float colorA) {
   const ReiTypeContext * ctx = (ReiTypeContext *)(void *)context;
   ctx->glDepthMask(1);
   ctx->glClearDepthf(depthValue);
