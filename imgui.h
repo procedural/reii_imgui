@@ -365,16 +365,13 @@ static inline void imguiCreateDeviceObjects() {
   globalImguiState->gpuMeshState.stencilTestFrontStencilTestPassDepthTestPassOp = REII_STENCIL_OP_KEEP;
   globalImguiState->gpuMeshState.stencilTestFrontStencilTestPassDepthTestFailOp = REII_STENCIL_OP_KEEP;
   globalImguiState->gpuMeshState.stencilTestFrontCompareOp                      = REII_COMPARE_OP_NEVER;
-  globalImguiState->gpuMeshState.stencilTestFrontCompareMask                    = 0;
-  globalImguiState->gpuMeshState.stencilTestFrontWriteMask                      = 0;
-  globalImguiState->gpuMeshState.stencilTestFrontReference                      = 0;
   globalImguiState->gpuMeshState.stencilTestBackStencilTestFailOp               = REII_STENCIL_OP_KEEP;
   globalImguiState->gpuMeshState.stencilTestBackStencilTestPassDepthTestPassOp  = REII_STENCIL_OP_KEEP;
   globalImguiState->gpuMeshState.stencilTestBackStencilTestPassDepthTestFailOp  = REII_STENCIL_OP_KEEP;
   globalImguiState->gpuMeshState.stencilTestBackCompareOp                       = REII_COMPARE_OP_NEVER;
-  globalImguiState->gpuMeshState.stencilTestBackCompareMask                     = 0;
-  globalImguiState->gpuMeshState.stencilTestBackWriteMask                       = 0;
-  globalImguiState->gpuMeshState.stencilTestBackReference                       = 0;
+  globalImguiState->gpuMeshState.stencilTestFrontAndBackCompareMask             = 0;
+  globalImguiState->gpuMeshState.stencilTestFrontAndBackWriteMask               = 0;
+  globalImguiState->gpuMeshState.stencilTestFrontAndBackReference               = 0;
   globalImguiState->gpuMeshState.blendLogicOpEnable                             = 0;
   globalImguiState->gpuMeshState.blendLogicOp                                   = REII_LOGIC_OP_CLEAR;
   globalImguiState->gpuMeshState.blendConstants[0]                              = 0;
@@ -424,7 +421,7 @@ static void inline imguiNewFrame() {
     glfwGetCursorPos(globalImguiState->window, &mouse_x, &mouse_y);
     io->mousePosition = (ImVec2){(float)mouse_x, (float)mouse_y};
   } else {
-    io->mousePosition = (ImVec2){-9.999999999999999e99, -9.999999999999999e99};
+    io->mousePosition = (ImVec2){-9.999999999999999e99f, -9.999999999999999e99f};
   }
 
   for (int i = 0; i < 3; i += 1) {
