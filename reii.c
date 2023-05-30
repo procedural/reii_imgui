@@ -8,7 +8,8 @@
 #endif
 
 #ifdef _WIN32
-#pragma comment(lib, "glfw3.lib")
+#pragma comment(lib, "imgui.lib")
+#pragma comment(lib, "glfw3dll.lib")
 #pragma comment(lib, "opengl32.lib")
 #endif
 
