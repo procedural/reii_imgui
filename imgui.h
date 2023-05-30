@@ -421,7 +421,7 @@ static void inline imguiNewFrame() {
     glfwGetCursorPos(globalImguiState->window, &mouse_x, &mouse_y);
     io->mousePosition = (ImVec2){(float)mouse_x, (float)mouse_y};
   } else {
-    io->mousePosition = (ImVec2){-9.999999999999999e99f, -9.999999999999999e99f};
+    io->mousePosition = (ImVec2){-1.f, -1.f};
   }
 
   for (int i = 0; i < 3; i += 1) {
