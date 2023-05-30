@@ -4,6 +4,7 @@ clang main.c reii.c -lm -lGL libglfw.so.3 libimgui.so
 patchelf --set-rpath . a.out
 exit
 #endif
+// cl main.cpp reii.c
 
 #include "reii.h"
 #include "imgui.h"
