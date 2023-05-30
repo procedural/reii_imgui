@@ -99,7 +99,7 @@ typedef enum ReiTextureBinding {
   REI_TEXTURE_BINDING_CUBE_NEGATIVE_Z = 0x851A,
 } ReiTextureBinding;
 
-// Texture initialization
+// Texture state
 
 typedef enum ReiSamplerFiltering {
   REI_SAMPLER_FILTERING_NEAREST             = 0x2600,
@@ -145,10 +145,9 @@ typedef enum ReiClearFlagBits {
 // Command recording of mesh state and mesh work domain execution
 
 typedef enum ReiCullMode {
-  REI_CULL_MODE_NONE           = 0,
-  REI_CULL_MODE_FRONT          = 0x0404,
-  REI_CULL_MODE_BACK           = 0x0405,
-  REI_CULL_MODE_FRONT_AND_BACK = 0x0408,
+  REI_CULL_MODE_NONE  = 0,
+  REI_CULL_MODE_FRONT = 0x0404,
+  REI_CULL_MODE_BACK  = 0x0405,
 } ReiCullMode;
 
 typedef enum ReiFrontFace {
@@ -208,8 +207,6 @@ typedef enum ReiBlendFactor {
   REI_BLEND_FACTOR_ONE_MINUS_TARGET_ALPHA   = 0x0305,
   REI_BLEND_FACTOR_CONSTANT_COLOR           = 0x8001,
   REI_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR = 0x8002,
-  REI_BLEND_FACTOR_CONSTANT_ALPHA           = 0x8003,
-  REI_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA = 0x8004,
   REI_BLEND_FACTOR_SOURCE_ALPHA_SATURATE    = 0x0308,
 } ReiBlendFactor;
 
@@ -241,16 +238,13 @@ typedef struct ReiMeshState {
   ReiStencilOp     stencilTestFrontStencilTestPassDepthTestPassOp;
   ReiStencilOp     stencilTestFrontStencilTestPassDepthTestFailOp;
   ReiCompareOp     stencilTestFrontCompareOp;
-  unsigned         stencilTestFrontCompareMask;
-  unsigned         stencilTestFrontWriteMask;
-  unsigned         stencilTestFrontReference;
   ReiStencilOp     stencilTestBackStencilTestFailOp;
   ReiStencilOp     stencilTestBackStencilTestPassDepthTestPassOp;
   ReiStencilOp     stencilTestBackStencilTestPassDepthTestFailOp;
   ReiCompareOp     stencilTestBackCompareOp;
-  unsigned         stencilTestBackCompareMask;
-  unsigned         stencilTestBackWriteMask;
-  unsigned         stencilTestBackReference;
+  unsigned         stencilTestFrontAndBackCompareMask;
+  unsigned         stencilTestFrontAndBackWriteMask;
+  unsigned         stencilTestFrontAndBackReference;
   ReiBool32        blendLogicOpEnable;
   ReiLogicOp       blendLogicOp;
   float            blendConstants[4];
@@ -292,8 +286,8 @@ typedef struct ReiTypeContext {
   void (*glBindTexture)(ReiTextureBinding binding, ReiHandleTexture texture);
   void (*glTexParameteri)(ReiTextureBinding binding, unsigned parameter, int value);
   void (*glPixelStorei)(unsigned parameter, int value);
-  void (*glTexImage2D)(ReiTextureBinding binding, int bindingLevel, ReiTextureTexelFormat bindingTexelFormat, int width, int height, int setTo0, ReiTextureTexelFormat texelsFormat, ReiTextureTexelType texelsType, void * texels);
-  void (*glTexSubImage2D)(ReiTextureBinding binding, int bindingLevel, int bindingX, int bindingY, int width, int height, ReiTextureTexelFormat texelsFormat, ReiTextureTexelType texelsType, void * texels);
+  void (*glTexImage2D)(ReiTextureBinding binding, int bindingLevel, ReiTextureTexelFormat bindingTexelFormat, int width, int height, int setTo0, ReiTextureTexelFormat texelsFormat, ReiTextureTexelType texelsType, const void * texels);
+  void (*glTexSubImage2D)(ReiTextureBinding binding, int bindingLevel, int bindingX, int bindingY, int width, int height, ReiTextureTexelFormat texelsFormat, ReiTextureTexelType texelsType, const void * texels);
   void (*glCopyTexImage2D)(ReiTextureBinding binding, int bindingLevel, ReiTextureTexelFormat bindingTexelFormat, int backbufferX, int backbufferY, int width, int height, int setTo0);
   void (*glCopyTexSubImage2D)(ReiTextureBinding binding, int bindingLevel, int bindingX, int bindingY, int backbufferX, int backbufferY, int width, int height);
   void (*glReadPixels)(int backbufferX, int backbufferY, int width, int height, ReiTextureTexelFormat texelsFormat, ReiTextureTexelType texelsType, void * outTexels);
@@ -467,7 +461,7 @@ static __inline void reiTextureSetStateSampler(ReiContext * context, ReiTextureB
 
 // Texture texels upload and backbuffer readback
 
-static __inline void reiTextureDefineAndCopyFromCpu(ReiContext * context, ReiTextureBinding binding, int bindingLevel, ReiTextureTexelFormat bindingTexelFormat, int width, int height, ReiTextureTexelFormat texelsFormat, ReiTextureTexelType texelsType, int texelsBytesAlignment, void * texels) {
+static __inline void reiTextureDefineAndCopyFromCpu(ReiContext * context, ReiTextureBinding binding, int bindingLevel, ReiTextureTexelFormat bindingTexelFormat, int width, int height, ReiTextureTexelFormat texelsFormat, ReiTextureTexelType texelsType, int texelsBytesAlignment, const void * texels) {
   const ReiTypeContext * ctx = (ReiTypeContext *)(void *)context;
   ctx->glPixelStorei(0x0CF5, texelsBytesAlignment); // GL_UNPACK_ALIGNMENT
   ctx->glTexImage2D(binding, bindingLevel, bindingTexelFormat, width, height, 0, texelsFormat, texelsType, texels);
@@ -478,7 +472,7 @@ static __inline void reiTextureDefineAndCopyFromBackbuffer(ReiContext * context,
   ctx->glCopyTexImage2D(binding, bindingLevel, bindingTexelFormat, backbufferX, backbufferY, width, height, 0);
 }
 
-static __inline void reiTextureCopyFromCpu(ReiContext * context, ReiTextureBinding binding, int bindingLevel, int bindingX, int bindingY, int width, int height, ReiTextureTexelFormat texelsFormat, ReiTextureTexelType texelsType, int texelsBytesAlignment, void * texels) {
+static __inline void reiTextureCopyFromCpu(ReiContext * context, ReiTextureBinding binding, int bindingLevel, int bindingX, int bindingY, int width, int height, ReiTextureTexelFormat texelsFormat, ReiTextureTexelType texelsType, int texelsBytesAlignment, const void * texels) {
   const ReiTypeContext * ctx = (ReiTypeContext *)(void *)context;
   ctx->glPixelStorei(0x0CF5, texelsBytesAlignment); // GL_UNPACK_ALIGNMENT
   ctx->glTexSubImage2D(binding, bindingLevel, bindingX, bindingY, width, height, texelsFormat, texelsType, texels);
@@ -569,11 +563,11 @@ static __inline void reiCommandMeshSetState(ReiContext * context, ReiMeshState *
   ctx->glDepthFunc(state->depthTestDepthCompareOp);
   state->stencilTestEnable == 1 ? ctx->glEnable(0x0B90) : ctx->glDisable(0x0B90); // GL_STENCIL_TEST
   ctx->glStencilOpSeparate(0x0404, state->stencilTestFrontStencilTestFailOp, state->stencilTestFrontStencilTestPassDepthTestFailOp, state->stencilTestFrontStencilTestPassDepthTestPassOp); // GL_FRONT
-  ctx->glStencilFuncSeparate(0x0404, state->stencilTestFrontCompareOp, state->stencilTestFrontReference, state->stencilTestFrontCompareMask); // GL_FRONT
-  ctx->glStencilMaskSeparate(0x0404, state->stencilTestFrontWriteMask); // GL_FRONT
+  ctx->glStencilFuncSeparate(0x0404, state->stencilTestFrontCompareOp, state->stencilTestFrontAndBackReference, state->stencilTestFrontAndBackCompareMask); // GL_FRONT
+  ctx->glStencilMaskSeparate(0x0404, state->stencilTestFrontAndBackWriteMask); // GL_FRONT
   ctx->glStencilOpSeparate(0x0405, state->stencilTestBackStencilTestFailOp, state->stencilTestBackStencilTestPassDepthTestFailOp, state->stencilTestBackStencilTestPassDepthTestPassOp); // GL_BACK
-  ctx->glStencilFuncSeparate(0x0405, state->stencilTestBackCompareOp, state->stencilTestBackReference, state->stencilTestBackCompareMask); // GL_BACK
-  ctx->glStencilMaskSeparate(0x0405, state->stencilTestBackWriteMask); // GL_BACK
+  ctx->glStencilFuncSeparate(0x0405, state->stencilTestBackCompareOp, state->stencilTestFrontAndBackReference, state->stencilTestFrontAndBackCompareMask); // GL_BACK
+  ctx->glStencilMaskSeparate(0x0405, state->stencilTestFrontAndBackWriteMask); // GL_BACK
   state->blendLogicOpEnable == 1 ? ctx->glEnable(0x0BF2) : ctx->glDisable(0x0BF2); // GL_COLOR_LOGIC_OP
   ctx->glLogicOp(state->blendLogicOp);
   ctx->glBlendColor(state->blendConstants[0], state->blendConstants[1], state->blendConstants[2], state->blendConstants[3]);
@@ -627,7 +621,7 @@ static __inline void reiSetProgramLocalValue(ReiContext * context, ReiProgramBin
   ctx->glProgramLocalParameter4fARB(binding, index, x, y, z, w);
 }
 
-static __inline void reiSubmitCommandLists(ReiContext * context, unsigned commandListsCount, ReiHandleCommandList * commandLists) {
+static __inline void reiSubmitCommandLists(ReiContext * context, unsigned commandListsCount, const ReiHandleCommandList * commandLists) {
   const ReiTypeContext * ctx = (ReiTypeContext *)(void *)context;
   unsigned i = 0;
   for (i = 0; i < commandListsCount; i += 1) {
@@ -667,7 +661,7 @@ static __inline void reiFinish(ReiContext * context) {
 }
 
 static __inline void reiCheckCode(ReiContext * context, const char * codeVertex, const char * codeFragment) {
-  const char * error = 0;
+  const char * error = NULL;
   if (codeVertex != 0) {
     ReiHandleProgram programVertex = reiCreateProgram(context);
     reiBindProgram(context, REI_PROGRAM_BINDING_VERTEX, programVertex);
@@ -735,16 +729,13 @@ typedef struct ReiiMeshState {
   ReiStencilOp     stencilTestFrontStencilTestPassDepthTestPassOp;
   ReiStencilOp     stencilTestFrontStencilTestPassDepthTestFailOp;
   ReiCompareOp     stencilTestFrontCompareOp;
-  unsigned         stencilTestFrontCompareMask;
-  unsigned         stencilTestFrontWriteMask;
-  unsigned         stencilTestFrontReference;
   ReiStencilOp     stencilTestBackStencilTestFailOp;
   ReiStencilOp     stencilTestBackStencilTestPassDepthTestPassOp;
   ReiStencilOp     stencilTestBackStencilTestPassDepthTestFailOp;
   ReiCompareOp     stencilTestBackCompareOp;
-  unsigned         stencilTestBackCompareMask;
-  unsigned         stencilTestBackWriteMask;
-  unsigned         stencilTestBackReference;
+  unsigned         stencilTestFrontAndBackCompareMask;
+  unsigned         stencilTestFrontAndBackWriteMask;
+  unsigned         stencilTestFrontAndBackReference;
   ReiBool32        blendLogicOpEnable;
   ReiLogicOp       blendLogicOp;
   float            blendConstants[4];
@@ -762,8 +753,6 @@ typedef struct ReiiMeshState {
   char *           codeVertex;
   char *           codeFragment;
 } ReiiMeshState;
-
-ReiiMeshState * REII_GLOBAL_CURRENT_MESH_STATE = 0;
 
 // Context
 
@@ -793,7 +782,7 @@ void reiiTextureSetStateSampler(ReiContext * context, ReiTextureBinding binding,
   reiBindTextureToActiveTextureSlot(context, metabinding, 0);
 }
 
-void reiiTextureDefineAndCopyFromCpu(ReiContext * context, ReiTextureBinding binding, ReiHandleTexture bindingTexture, int bindingLevel, ReiTextureTexelFormat bindingTexelFormat, int width, int height, ReiTextureTexelFormat texelsFormat, ReiTextureTexelType texelsType, int texelsBytesAlignment, void * texels) {
+void reiiTextureDefineAndCopyFromCpu(ReiContext * context, ReiTextureBinding binding, ReiHandleTexture bindingTexture, int bindingLevel, ReiTextureTexelFormat bindingTexelFormat, int width, int height, ReiTextureTexelFormat texelsFormat, ReiTextureTexelType texelsType, int texelsBytesAlignment, const void * texels) {
   ReiTextureBinding metabinding = binding == REI_TEXTURE_BINDING_2D ? REI_TEXTURE_BINDING_2D : REI_TEXTURE_BINDING_CUBE;
   reiSetActiveTextureSlot(context, 0);
   reiBindTextureToActiveTextureSlot(context, metabinding, bindingTexture);
@@ -809,7 +798,7 @@ void reiiTextureDefineAndCopyFromBackbuffer(ReiContext * context, ReiTextureBind
   reiBindTextureToActiveTextureSlot(context, metabinding, 0);
 }
 
-void reiiTextureCopyFromCpu(ReiContext * context, ReiTextureBinding binding, ReiHandleTexture bindingTexture, int bindingLevel, int bindingX, int bindingY, int width, int height, ReiTextureTexelFormat texelsFormat, ReiTextureTexelType texelsType, int texelsBytesAlignment, void * texels) {
+void reiiTextureCopyFromCpu(ReiContext * context, ReiTextureBinding binding, ReiHandleTexture bindingTexture, int bindingLevel, int bindingX, int bindingY, int width, int height, ReiTextureTexelFormat texelsFormat, ReiTextureTexelType texelsType, int texelsBytesAlignment, const void * texels) {
   ReiTextureBinding metabinding = binding == REI_TEXTURE_BINDING_2D ? REI_TEXTURE_BINDING_2D : REI_TEXTURE_BINDING_CUBE;
   reiSetActiveTextureSlot(context, 0);
   reiBindTextureToActiveTextureSlot(context, metabinding, bindingTexture);
@@ -841,7 +830,6 @@ void reiiCommandListSet(ReiContext * context, ReiHandleCommandList list) {
 
 void reiiCommandListEnd(ReiContext * context) {
   reiCommandListEnd(context);
-  REII_GLOBAL_CURRENT_MESH_STATE = 0;
 }
 
 void reiiCommandSetViewport(ReiContext * context, int x, int y, int width, int height) {
@@ -859,40 +847,39 @@ void reiiCommandClear(ReiContext * context, ReiClearFlags clear, float depthValu
 void reiiCommandMeshSetState(ReiContext * context, ReiiMeshState * state, ReiiMeshTextureBindings * bindings) {
   const char * error = NULL;
   unsigned i = 0;
-  if (state->programVertex == 0) {
-    ReiHandleProgram program = reiCreateProgram(context);
-    reiBindProgram(context, REI_PROGRAM_BINDING_VERTEX, program);
-    reiProgramInitialize(context, REI_PROGRAM_BINDING_VERTEX, strlen(state->codeVertex), state->codeVertex);
-    reiBindProgram(context, REI_PROGRAM_BINDING_VERTEX, REII_GLOBAL_CURRENT_MESH_STATE == 0 ? 0 : REII_GLOBAL_CURRENT_MESH_STATE->programVertex);
-    error = reiGetProgramStatusString(context);
-    if (error != NULL) {
-      if (error[0] != '\0') {
-        printf("%s", "[reiiCommandMeshSetState] Vertex code error:\n");
-        printf("%s", error);
-        fflush(stdout);
+  if (state != 0) {
+    if (state->programVertex == 0) {
+      ReiHandleProgram program = reiCreateProgram(context);
+      reiBindProgram(context, REI_PROGRAM_BINDING_VERTEX, program);
+      reiProgramInitialize(context, REI_PROGRAM_BINDING_VERTEX, strlen(state->codeVertex), state->codeVertex);
+      reiBindProgram(context, REI_PROGRAM_BINDING_VERTEX, 0);
+      error = reiGetProgramStatusString(context);
+      if (error != NULL) {
+        if (error[0] != '\0') {
+          printf("%s", "[reiiCommandMeshSetState] Vertex code error:\n");
+          printf("%s", error);
+          fflush(stdout);
+        }
       }
+      state->programVertex = program;
     }
-    state->programVertex = program;
-  }
-  if (state->programFragment == 0) {
-    ReiHandleProgram program = reiCreateProgram(context);
-    reiBindProgram(context, REI_PROGRAM_BINDING_FRAGMENT, program);
-    reiProgramInitialize(context, REI_PROGRAM_BINDING_FRAGMENT, strlen(state->codeFragment), state->codeFragment);
-    reiBindProgram(context, REI_PROGRAM_BINDING_FRAGMENT, REII_GLOBAL_CURRENT_MESH_STATE == 0 ? 0 : REII_GLOBAL_CURRENT_MESH_STATE->programFragment);
-    error = reiGetProgramStatusString(context);
-    if (error != NULL) {
-      if (error[0] != '\0') {
-        printf("%s", "[reiiCommandMeshSetState] Fragment code error:\n");
-        printf("%s", error);
-        fflush(stdout);
+    if (state->programFragment == 0) {
+      ReiHandleProgram program = reiCreateProgram(context);
+      reiBindProgram(context, REI_PROGRAM_BINDING_FRAGMENT, program);
+      reiProgramInitialize(context, REI_PROGRAM_BINDING_FRAGMENT, strlen(state->codeFragment), state->codeFragment);
+      reiBindProgram(context, REI_PROGRAM_BINDING_FRAGMENT, 0);
+      error = reiGetProgramStatusString(context);
+      if (error != NULL) {
+        if (error[0] != '\0') {
+          printf("%s", "[reiiCommandMeshSetState] Fragment code error:\n");
+          printf("%s", error);
+          fflush(stdout);
+        }
       }
+      state->programFragment = program;
     }
-    state->programFragment = program;
-  }
-  if (state != REII_GLOBAL_CURRENT_MESH_STATE) {
     reiCommandMeshSetState(context, (ReiMeshState *)((void *)state));
   }
-  REII_GLOBAL_CURRENT_MESH_STATE = state;
   if (bindings != 0) {
     for (; i < REII_MAX_TEXTURE_BINDINGS_COUNT; i += 1) {
       if (bindings->binding[i] != 0 && bindings->texture[i] == 0) {
@@ -948,7 +935,7 @@ void reiiSetProgramEnvironmentValueFragment(ReiContext * context, unsigned index
   reiSetProgramEnvironmentValue(context, REI_PROGRAM_BINDING_FRAGMENT, index, x, y, z, w);
 }
 
-void reiiSubmitCommandLists(ReiContext * context, unsigned listsCount, ReiHandleCommandList * lists) {
+void reiiSubmitCommandLists(ReiContext * context, unsigned listsCount, const ReiHandleCommandList * lists) {
   reiSubmitCommandLists(context, listsCount, lists);
 }
 

@@ -63,10 +63,9 @@ typedef enum ReiiClearFlagBits {
 } ReiiClearFlagBits;
 
 typedef enum ReiiCullMode {
-  REII_CULL_MODE_NONE           = 0,
-  REII_CULL_MODE_FRONT          = 0x0404,
-  REII_CULL_MODE_BACK           = 0x0405,
-  REII_CULL_MODE_FRONT_AND_BACK = 0x0408,
+  REII_CULL_MODE_NONE  = 0,
+  REII_CULL_MODE_FRONT = 0x0404,
+  REII_CULL_MODE_BACK  = 0x0405,
 } ReiiCullMode;
 
 typedef enum ReiiFrontFace {
@@ -126,8 +125,6 @@ typedef enum ReiiBlendFactor {
   REII_BLEND_FACTOR_ONE_MINUS_TARGET_ALPHA   = 0x0305,
   REII_BLEND_FACTOR_CONSTANT_COLOR           = 0x8001,
   REII_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR = 0x8002,
-  REII_BLEND_FACTOR_CONSTANT_ALPHA           = 0x8003,
-  REII_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA = 0x8004,
   REII_BLEND_FACTOR_SOURCE_ALPHA_SATURATE    = 0x0308,
 } ReiiBlendFactor;
 
@@ -159,16 +156,13 @@ typedef struct ReiiMeshState {
   ReiiStencilOp     stencilTestFrontStencilTestPassDepthTestPassOp;
   ReiiStencilOp     stencilTestFrontStencilTestPassDepthTestFailOp;
   ReiiCompareOp     stencilTestFrontCompareOp;
-  unsigned          stencilTestFrontCompareMask;
-  unsigned          stencilTestFrontWriteMask;
-  unsigned          stencilTestFrontReference;
   ReiiStencilOp     stencilTestBackStencilTestFailOp;
   ReiiStencilOp     stencilTestBackStencilTestPassDepthTestPassOp;
   ReiiStencilOp     stencilTestBackStencilTestPassDepthTestFailOp;
   ReiiCompareOp     stencilTestBackCompareOp;
-  unsigned          stencilTestBackCompareMask;
-  unsigned          stencilTestBackWriteMask;
-  unsigned          stencilTestBackReference;
+  unsigned          stencilTestFrontAndBackCompareMask;
+  unsigned          stencilTestFrontAndBackWriteMask;
+  unsigned          stencilTestFrontAndBackReference;
   ReiiBool32        blendLogicOpEnable;
   ReiiLogicOp       blendLogicOp;
   float             blendConstants[4];
@@ -216,9 +210,9 @@ void reiiCreateContext                      (ReiiTypeProcedureGetProcAddress get
 void reiiCreateTexture                      (ReiiContext * context, ReiiHandleTexture * outTexture);
 void reiiTextureSetStateMipmap              (ReiiContext * context, ReiiTextureBinding binding, ReiiHandleTexture bindingTexture, ReiiBool32 generateMipLevels);
 void reiiTextureSetStateSampler             (ReiiContext * context, ReiiTextureBinding binding, ReiiHandleTexture bindingTexture, ReiiSamplerFiltering magFiltering, ReiiSamplerFiltering minFiltering, ReiiSamplerBehaviorOutsideTextureCoordinate behaviorOutsideTextureCoordinateU, ReiiSamplerBehaviorOutsideTextureCoordinate behaviorOutsideTextureCoordinateV, int maxAnisotropy);
-void reiiTextureDefineAndCopyFromCpu        (ReiiContext * context, ReiiTextureBinding binding, ReiiHandleTexture bindingTexture, int bindingLevel, ReiiTextureTexelFormat bindingTexelFormat, int width, int height, ReiiTextureTexelFormat texelsFormat, ReiiTextureTexelType texelsType, int texelsBytesAlignment, void * texels);
+void reiiTextureDefineAndCopyFromCpu        (ReiiContext * context, ReiiTextureBinding binding, ReiiHandleTexture bindingTexture, int bindingLevel, ReiiTextureTexelFormat bindingTexelFormat, int width, int height, ReiiTextureTexelFormat texelsFormat, ReiiTextureTexelType texelsType, int texelsBytesAlignment, const void * texels);
 void reiiTextureDefineAndCopyFromBackbuffer (ReiiContext * context, ReiiTextureBinding binding, ReiiHandleTexture bindingTexture, int bindingLevel, ReiiTextureTexelFormat bindingTexelFormat, int backbufferX, int backbufferY, int width, int height);
-void reiiTextureCopyFromCpu                 (ReiiContext * context, ReiiTextureBinding binding, ReiiHandleTexture bindingTexture, int bindingLevel, int bindingX, int bindingY, int width, int height, ReiiTextureTexelFormat texelsFormat, ReiiTextureTexelType texelsType, int texelsBytesAlignment, void * texels);
+void reiiTextureCopyFromCpu                 (ReiiContext * context, ReiiTextureBinding binding, ReiiHandleTexture bindingTexture, int bindingLevel, int bindingX, int bindingY, int width, int height, ReiiTextureTexelFormat texelsFormat, ReiiTextureTexelType texelsType, int texelsBytesAlignment, const void * texels);
 void reiiTextureCopyFromBackbuffer          (ReiiContext * context, ReiiTextureBinding binding, ReiiHandleTexture bindingTexture, int bindingLevel, int bindingX, int bindingY, int backbufferX, int backbufferY, int width, int height);
 void reiiReadbackToCpuFromBackbuffer        (ReiiContext * context, int backbufferX, int backbufferY, int width, int height, ReiiTextureTexelFormat texelsFormat, ReiiTextureTexelType texelsType, int texelsBytesAlignment, void * outTexels);
 
@@ -242,7 +236,7 @@ void reiiCommandMeshPosition                (ReiiContext * context, float x, flo
 
 void reiiSetProgramEnvironmentValueVertex   (ReiiContext * context, unsigned index, float x, float y, float z, float w);
 void reiiSetProgramEnvironmentValueFragment (ReiiContext * context, unsigned index, float x, float y, float z, float w);
-void reiiSubmitCommandLists                 (ReiiContext * context, unsigned listsCount, ReiiHandleCommandList * lists);
+void reiiSubmitCommandLists                 (ReiiContext * context, unsigned listsCount, const ReiiHandleCommandList * lists);
 
 // Destroy
 
