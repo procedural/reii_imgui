@@ -202,9 +202,9 @@ int main() {
       move_vec_z = pos_z * rot_cos + pos_x * rot_sin;
     }
 
-#if 0
     static bool showTestWindow = 1;
     igShowTestWindow(&showTestWindow);
+#if 0
     {
       // Flat UI by yorick.penninks: https://color.adobe.com/Flat-UI-color-theme-2469224/
       static ImVec3 color_for_text = {236 / 255.f, 240 / 255.f, 241 / 255.f};
@@ -258,7 +258,7 @@ int main() {
     int64_t quantized_future_pos_x = (int64_t)(future_pos_x * quanta);
     int64_t quantized_future_pos_z = (int64_t)(future_pos_z * quanta);
 
-#if 1
+#if 0
     printf("%ld %ld\n", quantized_future_pos_x, quantized_future_pos_z);
     fflush(stdout);
 #endif
